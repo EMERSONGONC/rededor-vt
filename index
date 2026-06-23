@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Rededor — Calculadora VT</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --azul:#1A2B5C;--verde:#00C48C;--bg:#F0F2F7;
+  --card:#fff;--borda:#E2E8F0;--texto:#1E293B;
+  --sub:#94A3B8;--cinza:#64748B;
+}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);min-height:100vh;padding-bottom:32px;}
+.header{background:var(--azul);color:#fff;padding:20px 16px 32px;}
+.header-logo{display:flex;align-items:center;gap:10px;}
+.logo-icon{width:36px;height:36px;background:var(--verde);border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;color:#fff;flex-shrink:0;}
+.header h1{font-size:20px;font-weight:900;line-height:1;}
+.header p{font-size:11px;color:#93c5fd;margin-top:2px;}
+.header-tag{font-size:12px;color:#bfdbfe;margin-top:8px;}
+.content{padding:0 14px;margin-top:-16px;}
+.card{background:var(--card);border-radius:18px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.08);border:1px solid var(--borda);margin-bottom:12px;}
+.card-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--sub);margin-bottom:12px;}
+.lbl{font-size:11px;font-weight:700;color:var(--cinza);margin-bottom:4px;display:block;}
+.inp{width:100%;background:#F8FAFC;border:1.5px solid var(--borda);border-radius:12px;padding:11px 14px;font-size:14px;color:var(--texto);outline:none;transition:border .2s;-webkit-appearance:none;}
+.inp:focus{border-color:var(--azul);background:#fff;}
+.inp.ok{border-color:var(--verde);background:#F0FDF4;}
+.inp.err{border-color:#EF4444;background:#FEF2F2;}
+.inp-hint{font-size:11px;margin-top:3px;font-weight:600;min-height:14px;}
+.inp-hint.ok{color:#059669;}.inp-hint.err{color:#DC2626;}.inp-hint.loading{color:#2563EB;}
+.inp-addr{font-size:11px;color:var(--sub);margin-top:3px;}
+.inp-addr strong{color:var(--texto);}
+.field{margin-bottom:12px;}
+.dias-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:4px;}
+.dia-btn{padding:8px 4px;border-radius:10px;border:1.5px solid var(--borda);background:#F8FAFC;font-size:12px;font-weight:700;color:var(--cinza);cursor:pointer;text-align:center;transition:all .15s;}
+.dia-btn.active{background:var(--azul);color:#fff;border-color:var(--azul);}
+
+/* API KEY BANNER */
+.api-banner{background:#FFF7ED;border:1.5px solid #FED7AA;border-radius:14px;padding:14px;margin-bottom:12px;}
+.api-banner-title{font-size:12px;font-weight:700;color:#9A3412;margin-bottom:6px;}
+.api-banner-body{font-size:11px;color:#C2410C;line-height:1.5;margin-bottom:10px;}
+.api-key-row{display:flex;gap:8px;}
+.api-key-row .inp{font-size:12px;padding:9px 12px;border-radius:10px;}
+.btn-salvar-key{background:var(--azul);color:#fff;font-weight:700;font-size:12px;padding:9px 14px;border-radius:10px;border:none;cursor:pointer;white-space:nowrap;}
+.api-ok-badge{font-size:11px;font-weight:700;color:#059669;background:#DCFCE7;padding:4px 10px;border-radius:99px;display:inline-flex;align-items:center;gap:4px;}
+
+/* LOADING */
+.loading-bar{height:3px;border-radius:99px;background:var(--borda);overflow:hidden;margin:8px 0 4px;}
+.loading-fill{height:100%;background:var(--verde);border-radius:99px;width:0%;transition:width .4s;}
+.loading-text{font-size:11px;color:var(--sub);text-align:center;}
+.spinner{display:inline-block;width:13px;height:13px;border:2px solid #E2E8F0;border-top-color:var(--azul);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:4px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.btn-primary{width:100%;background:var(--verde);color:#fff;font-weight:700;font-size:15px;padding:15px;border-radius:14px;border:none;cursor:pointer;transition:transform .15s;box-shadow:0 4px 16px rgba(0,196,140,.3);margin-top:4px;}
+.btn-primary:active{transform:scale(.97);}
+.btn-primary:disabled{background:#94A3B8;box-shadow:none;cursor:not-allowed;}
+
+/* RESULTADO */
+.resultado{display:none;}
+.resultado.show{display:flex;flex-direction:column;gap:12px;}
+.custo-banner{background:linear-gradient(135deg,var(--azul),#0f1e42);border-radius:18px;padding:20px;}
+.custo-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#93c5fd;margin-bottom:2px;}
+.custo-value{font-size:42px;font-weight:900;color:var(--verde);line-height:1;}
+.custo-sub{font-size:12px;color:#bfdbfe;margin-top:4px;}
+.custo-breakdown{margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.bd-item{background:rgba(255,255,255,.1);border-radius:12px;padding:10px 12px;}
+.bd-label{font-size:9px;font-weight:700;text-transform:uppercase;color:#93c5fd;letter-spacing:.06em;margin-bottom:2px;}
+.bd-val{font-size:18px;font-weight:900;color:#fff;}
+.bd-sub{font-size:10px;color:#bfdbfe;margin-top:1px;}
+.linha-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid #F1F5F9;}
+.linha-item:last-child{border-bottom:none;}
+.linha-item.best{background:#F0FDF4;border-radius:12px;padding:10px;margin:0 -2px;}
+.badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;white-space:nowrap;flex-shrink:0;margin-top:1px;}
+.badge-onibus{background:#DBEAFE;color:#1E40AF;}
+.badge-express{background:#D1FAE5;color:#065F46;}
+.badge-metro{background:#EDE9FE;color:#5B21B6;}
+.badge-brt{background:#FEF3C7;color:#92400E;}
+.badge-trem{background:#FCE7F3;color:#9D174D;}
+.badge-combinado{background:#F1F5F9;color:#475569;}
+.linha-nome{font-size:13px;font-weight:700;color:var(--texto);}
+.linha-det{font-size:11px;color:var(--sub);margin-top:2px;line-height:1.4;}
+.linha-custo{font-size:12px;font-weight:700;color:var(--azul);margin-top:3px;}
+.alerta{background:#FFF7ED;border:1px solid #FED7AA;border-radius:12px;padding:12px 14px;font-size:11px;color:#9A3412;display:flex;gap:8px;}
+.tip-walk{background:#EFF6FF;border:1px solid #BFDBFE;border-radius:12px;padding:12px 14px;font-size:11px;color:#1E40AF;display:flex;gap:8px;}
+.trecho-tags{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px;}
+.trecho-tag{background:#F1F5F9;padding:4px 10px;border-radius:99px;font-weight:700;font-size:12px;color:var(--texto);}
+.trecho-dist{font-size:11px;color:var(--sub);}
+.custo-anual-row{display:flex;justify-content:space-between;align-items:center;}
+.btn-novo{width:100%;background:transparent;color:var(--azul);font-weight:700;font-size:14px;padding:12px;border-radius:14px;border:2px solid var(--azul);cursor:pointer;}
+
+/* FONTE MODO */
+.modo-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;display:inline-block;margin-bottom:8px;}
+.modo-gmaps{background:#DCFCE7;color:#166534;}
+.modo-local{background:#FEF3C7;color:#92400E;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">
+    <div class="logo-icon">R</div>
+    <div><h1>Rededor</h1><p>Calculadora VT</p></div>
+  </div>
+  <p class="header-tag">Digite origem e destino — calcule o custo real de transporte</p>
+</div>
+
+<div class="content">
+
+  <!-- API KEY BANNER -->
+  <div class="api-banner" id="api-banner">
+    <div class="api-banner-title">🗺️ Google Maps API (opcional, recomendado)</div>
+    <div class="api-banner-body">
+      Com sua chave do Google Maps, o cálculo usa rotas reais de transporte público, linhas corretas e tempos precisos.<br><br>
+      <b>Como obter grátis:</b> console.cloud.google.com → criar projeto → ativar "Directions API" → criar credencial → copiar chave.<br>
+      Sem chave: usa estimativa local por tarifas fixas.
+    </div>
+    <div class="api-key-row">
+      <input class="inp" id="inp-apikey" type="password" placeholder="Cole sua chave aqui: AIza..."/>
+      <button class="btn-salvar-key" onclick="salvarKey()">Salvar</button>
+    </div>
+    <div style="margin-top:8px;" id="key-status"></div>
+  </div>
+
+  <!-- FORM -->
+  <div id="form-section">
+    <div class="card">
+      <div class="card-title">Endereço de origem</div>
+      <div class="field">
+        <label class="lbl">CEP de origem</label>
+        <input class="inp" id="cep-origem" placeholder="00000-000" maxlength="9" inputmode="numeric" oninput="handleCEP('origem',this)"/>
+        <div class="inp-hint" id="hint-origem"></div>
+        <div class="inp-addr" id="addr-origem"></div>
+      </div>
+
+      <div class="card-title">Endereço de destino</div>
+      <div class="field">
+        <label class="lbl">CEP de destino</label>
+        <input class="inp" id="cep-destino" placeholder="00000-000" maxlength="9" inputmode="numeric" oninput="handleCEP('destino',this)"/>
+        <div class="inp-hint" id="hint-destino"></div>
+        <div class="inp-addr" id="addr-destino"></div>
+      </div>
+
+      <div class="field">
+        <label class="lbl">Dias presenciais por mês</label>
+        <div class="dias-grid">
+          <button class="dia-btn" onclick="setDias(4,this)">4</button>
+          <button class="dia-btn" onclick="setDias(8,this)">8</button>
+          <button class="dia-btn active" onclick="setDias(12,this)">12</button>
+          <button class="dia-btn" onclick="setDias(16,this)">16</button>
+          <button class="dia-btn" onclick="setDias(22,this)">22</button>
+        </div>
+      </div>
+
+      <div id="loading-section" style="display:none;">
+        <div class="loading-bar"><div class="loading-fill" id="loading-fill"></div></div>
+        <div class="loading-text" id="loading-text">Calculando...</div>
+      </div>
+
+      <button class="btn-primary" id="btn-calcular" onclick="calcular()">Calcular custo de transporte</button>
+    </div>
+  </div>
+
+  <!-- RESULTADO -->
+  <div class="resultado" id="resultado">
+
+    <div class="custo-banner">
+      <div class="custo-label">Custo mensal estimado</div>
+      <div class="custo-value" id="res-mensal">—</div>
+      <div class="custo-sub" id="res-sub">ida + volta</div>
+      <div class="custo-breakdown">
+        <div class="bd-item">
+          <div class="bd-label">Por dia</div>
+          <div class="bd-val" id="res-dia">—</div>
+          <div class="bd-sub">ida + volta</div>
+        </div>
+        <div class="bd-item">
+          <div class="bd-label">Passagens/dia</div>
+          <div class="bd-val" id="res-pass">—</div>
+          <div class="bd-sub">incluindo baldeações</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Trecho</div>
+      <div class="trecho-tags">
+        <span class="trecho-tag" id="res-origem-tag">—</span>
+        <span style="color:var(--sub);">→</span>
+        <span class="trecho-tag" id="res-destino-tag">—</span>
+      </div>
+      <div class="trecho-dist" id="res-dist"></div>
+    </div>
+
+    <div class="card">
+      <span class="modo-badge" id="res-modo-badge">—</span>
+      <div class="card-title" style="margin-top:4px;">Opções de transporte</div>
+      <div id="lista-linhas"></div>
+      <div id="tip-walk-box" style="display:none;" class="tip-walk" style="margin-top:10px;">
+        <span>🚶</span><span id="tip-walk-text"></span>
+      </div>
+      <div class="alerta" id="aviso-preco" style="margin-top:10px;">
+        <span>⚠️</span><span id="aviso-texto">Valores estimados. Confirme tarifas no site da concessionária.</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Custo anual</div>
+      <div class="custo-anual-row">
+        <div>
+          <div style="font-size:11px;color:var(--sub);">12 meses</div>
+          <div style="font-size:28px;font-weight:900;color:var(--azul);" id="res-anual">—</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:11px;color:var(--sub);">Tarifa base</div>
+          <div style="font-size:20px;font-weight:900;color:var(--texto);" id="res-tarifa">—</div>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-novo" onclick="novoCalculo()">← Novo cálculo</button>
+  </div>
+
+</div>
+
+<script>
+// ── ESTADO ────────────────────────────────────────────────────────────────────
+const state = { dias: 12, origem: null, destino: null };
+let cepTimers = {};
+let apiKey = localStorage.getItem('gmaps_key') || '';
+
+// ── INICIALIZAÇÃO ─────────────────────────────────────────────────────────────
+(function init() {
+  if (apiKey) {
+    document.getElementById('inp-apikey').value = apiKey;
+    showKeyOk();
+  }
+})();
+
+function salvarKey() {
+  const v = document.getElementById('inp-apikey').value.trim();
+  if (!v.startsWith('AIza') || v.length < 30) {
+    document.getElementById('key-status').innerHTML =
+      '<span style="font-size:11px;color:#DC2626;font-weight:700;">❌ Chave inválida. Deve começar com AIza...</span>';
+    return;
+  }
+  apiKey = v;
+  localStorage.setItem('gmaps_key', v);
+  showKeyOk();
+}
+
+function showKeyOk() {
+  document.getElementById('key-status').innerHTML =
+    '<span class="api-ok-badge">✅ Chave salva — usando Google Maps</span>';
+  document.getElementById('api-banner').style.border = '1.5px solid #86EFAC';
+  document.getElementById('api-banner').style.background = '#F0FDF4';
+  document.querySelector('.api-banner-title').style.color = '#166534';
+  // Pré-carrega o Maps JS já na hora que salva a chave
+  preloadMapsJS();
+}
+
+var mapsJSLoaded = false;
+var mapsJSLoading = null;
+
+function preloadMapsJS() {
+  if (mapsJSLoaded || mapsJSLoading) return;
+  mapsJSLoading = new Promise((resolve, reject) => {
+    if (window.google && window.google.maps) { mapsJSLoaded = true; resolve(); return; }
+    const script = document.createElement('script');
+    script.src = 'https://maps.googleapis.com/maps/api/js?key=' + apiKey + '&libraries=places';
+    script.onload = () => { mapsJSLoaded = true; resolve(); };
+    script.onerror = () => reject(new Error('Falha ao carregar Google Maps. Verifique a chave.'));
+    document.head.appendChild(script);
+  });
+}
+
+// ── DIAS ──────────────────────────────────────────────────────────────────────
+function setDias(n, btn) {
+  state.dias = n;
+  document.querySelectorAll('.dia-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ── NORMALIZAR ────────────────────────────────────────────────────────────────
+function norm(s) {
+  return (s || '').toLowerCase()
+    .replace(/[áàãâä]/g, 'a').replace(/[éèêë]/g, 'e')
+    .replace(/[íìîï]/g, 'i').replace(/[óòõôö]/g, 'o')
+    .replace(/[úùûü]/g, 'u').replace(/[ç]/g, 'c').replace(/[ñ]/g, 'n');
+}
+
+// ── CEP ───────────────────────────────────────────────────────────────────────
+function handleCEP(tipo, input) {
+  let v = input.value.replace(/\D/g, '');
+  if (v.length > 5) v = v.slice(0, 5) + '-' + v.slice(5, 8);
+  input.value = v;
+  state[tipo] = null;
+  const hint = document.getElementById('hint-' + tipo);
+  const addr = document.getElementById('addr-' + tipo);
+  clearTimeout(cepTimers[tipo]);
+  if (v.replace(/\D/g, '').length < 8) {
+    hint.textContent = ''; hint.className = 'inp-hint';
+    input.className = 'inp'; addr.innerHTML = ''; return;
+  }
+  hint.textContent = '🔍 Buscando...'; hint.className = 'inp-hint loading';
+  cepTimers[tipo] = setTimeout(async () => {
+    try {
+      const r = await fetch('https://viacep.com.br/ws/' + v.replace(/\D/g, '') + '/json/');
+      const d = await r.json();
+      if (d.erro) throw new Error('CEP não encontrado');
+      state[tipo] = d;
+      hint.textContent = '✅ ' + d.localidade + '/' + d.uf;
+      hint.className = 'inp-hint ok'; input.className = 'inp ok';
+      addr.innerHTML = '<strong>' + (d.logradouro || '') + '</strong>' +
+        (d.logradouro ? ', ' : '') + d.bairro + ' — ' + d.localidade + '/' + d.uf;
+    } catch (e) {
+      state[tipo] = null;
+      hint.textContent = '❌ ' + e.message; hint.className = 'inp-hint err';
+      input.className = 'inp err'; addr.innerHTML = '';
+    }
+  }, 600);
+}
+
+// ── CALCULAR ──────────────────────────────────────────────────────────────────
+async function calcular() {
+  if (!state.origem || !state.destino) {
+    alert('Preencha os dois CEPs corretamente.'); return;
+  }
+  const btn = document.getElementById('btn-calcular');
+  const ls = document.getElementById('loading-section');
+  const fill = document.getElementById('loading-fill');
+  const lt = document.getElementById('loading-text');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Calculando...';
+  ls.style.display = 'block';
+  let pct = 0;
+  const prog = setInterval(() => {
+    pct = Math.min(pct + Math.random() * 18, 85);
+    fill.style.width = pct + '%';
+  }, 250);
+
+  try {
+    let resultado;
+    if (apiKey) {
+      lt.textContent = 'Consultando Google Maps...';
+      resultado = await calcularGoogleMaps();
+    } else {
+      lt.textContent = 'Calculando por tarifas locais...';
+      await new Promise(r => setTimeout(r, 900));
+      resultado = calcularLocal();
+    }
+    clearInterval(prog); fill.style.width = '100%';
+    setTimeout(() => {
+      ls.style.display = 'none';
+      btn.disabled = false; btn.textContent = 'Calcular custo de transporte';
+      renderResultado(resultado);
+    }, 300);
+  } catch (e) {
+    clearInterval(prog);
+    console.warn('Google Maps falhou, usando fallback local:', e.message);
+    try {
+      // Fallback automático para cálculo local
+      const resultado = calcularLocal();
+      resultado.obs = '⚠ Google Maps indisponível (' + e.message + '). ' + resultado.obs;
+      fill.style.width = '100%';
+      setTimeout(() => {
+        ls.style.display = 'none';
+        btn.disabled = false; btn.textContent = 'Calcular custo de transporte';
+        renderResultado(resultado);
+      }, 200);
+    } catch (e2) {
+      btn.disabled = false; btn.textContent = 'Calcular custo de transporte';
+      ls.style.display = 'none';
+      alert('Erro: ' + e2.message);
+    }
+  }
+}
+
+// ── GOOGLE MAPS DIRECTIONS API ────────────────────────────────────────────────
+async function calcularGoogleMaps() {
+  const o = state.origem;
+  const d = state.destino;
+
+  const endO = encodeURIComponent((o.logradouro || '') + ', ' + o.bairro + ', ' + o.localidade + ', ' + o.uf + ', Brasil');
+  const endD = encodeURIComponent((d.logradouro || '') + ', ' + d.bairro + ', ' + d.localidade + ', ' + d.uf + ', Brasil');
+
+  const url = 'https://maps.googleapis.com/maps/api/directions/json' +
+    '?origin=' + endO +
+    '&destination=' + endD +
+    '&mode=transit' +
+    '&transit_mode=bus|subway|train|tram' +
+    '&language=pt-BR' +
+    '&region=br' +
+    '&alternatives=true' +
+    '&key=' + apiKey;
+
+  // Google Maps Directions API tem bloqueio CORS em chamadas diretas do browser
+  // Usar proxy CORS público ou endpoint via callback JSONP não existe para Directions
+  // Solução: usar Maps JavaScript API com DirectionsService (roda no browser)
+  return await calcularViaMapsJS();
+}
+
+async function calcularViaMapsJS() {
+  // Reutiliza script já carregado, ou aguarda o preload
+  if (!mapsJSLoaded) {
+    if (!mapsJSLoading) preloadMapsJS();
+    await Promise.race([
+      mapsJSLoading,
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout ao carregar Google Maps.')), 6000))
+    ]);
+  }
+
+  const o = state.origem;
+  const d = state.destino;
+
+  const endO = (o.logradouro || '') + ', ' + o.bairro + ', ' + o.localidade + ', ' + o.uf;
+  const endD = (d.logradouro || '') + ', ' + d.bairro + ', ' + d.localidade + ', ' + d.uf;
+
+  return new Promise((resolve, reject) => {
+    const service = new google.maps.DirectionsService();
+    const timeout = setTimeout(() => reject(new Error('Tempo esgotado. Verifique sua conexão.')), 7000);
+    service.route({
+      origin: endO,
+      destination: endD,
+      travelMode: google.maps.TravelMode.TRANSIT,
+      transitOptions: {
+        modes: [
+          google.maps.TransitMode.BUS,
+          google.maps.TransitMode.SUBWAY,
+          google.maps.TransitMode.TRAIN,
+          google.maps.TransitMode.TRAM,
+        ]
+      },
+      provideRouteAlternatives: true,
+      language: 'pt-BR',
+      region: 'BR',
+    }, (result, status) => {
+      clearTimeout(timeout);
+      if (status !== 'OK') {
+        reject(new Error('Google Maps: ' + status + '. Verifique se a chave tem Directions API ativada.'));
+        return;
+      }
+      resolve(parseGoogleResult(result));
+    });
+  });
+}
+
+function parseGoogleResult(result) {
+  const dias = state.dias;
+  const routes = result.routes;
+  const linhas = [];
+  let melhorIdx = 0;
+  let menorCustoViagem = Infinity;
+
+  // Tarifas reais para enriquecer (Google não retorna preço)
+  const tarifasPorCidade = {
+    'rio de janeiro': { onibus: 4.05, metro: 6.00, trem: 2.20, brt: 4.05 },
+    'sao paulo':      { onibus: 4.40, metro: 5.00, trem: 5.00, brt: 4.40 },
+    'belo horizonte': { onibus: 4.50, metro: 4.50, brt: 4.50 },
+    'curitiba':       { onibus: 5.50, brt: 5.50 },
+    'brasilia':       { onibus: 5.50, metro: 5.50 },
+    'salvador':       { onibus: 4.50, metro: 4.50 },
+    'recife':         { onibus: 4.00, metro: 4.00 },
+    'fortaleza':      { onibus: 3.90, metro: 3.90 },
+    'porto alegre':   { onibus: 4.80, metro: 4.80 },
+  };
+  const cidNorm = norm(state.origem.localidade);
+  let tarifas = { onibus: 4.50, metro: 5.00, trem: 2.20, brt: 4.50 };
+  for (const k of Object.keys(tarifasPorCidade)) {
+    if (cidNorm.includes(k) || k.includes(cidNorm)) { tarifas = tarifasPorCidade[k]; break; }
+  }
+
+  // Maricá intermunicipal
+  const cidO = norm(state.origem.localidade);
+  const cidD = norm(state.destino.localidade);
+  const INTERMU = { 'marica_rio de janeiro': 42.00, 'marica_niteroi': 18.00 };
+  const chave = cidO + '_' + cidD;
+  const isIntermu = cidO !== cidD;
+  const tarifaIntermu = INTERMU[chave] || INTERMU[cidD + '_' + cidO] || null;
+
+  routes.slice(0, 3).forEach((route, ri) => {
+    const leg = route.legs[0];
+    const distKm = (leg.distance.value / 1000).toFixed(1);
+    const durMin = Math.round(leg.duration.value / 60);
+
+    // Identificar modais usados
+    const steps = leg.steps.filter(s => s.travel_mode === 'TRANSIT');
+    const tipos = steps.map(s => {
+      const v = s.transit_details.line.vehicle.type;
+      if (v === 'SUBWAY' || v === 'METRO_RAIL') return 'metrô';
+      if (v === 'HEAVY_RAIL' || v === 'COMMUTER_TRAIN') return 'trem';
+      if (v === 'BUS') {
+        const n = (s.transit_details.line.name || '').toLowerCase();
+        if (n.includes('brt') || n.includes('expresso')) return 'BRT';
+        return 'ônibus';
+      }
+      if (v === 'TRAM') return 'VLT';
+      return 'ônibus';
+    });
+
+    const tiposUnicos = [...new Set(tipos)];
+    const tipoLabel = tiposUnicos.length > 1 ? 'combinado' : (tiposUnicos[0] || 'ônibus');
+
+    // Calcular custo baseado nos modais + tarifas reais
+    let custoViagem = 0;
+    const linhasNomes = steps.map(s => s.transit_details.line.short_name || s.transit_details.line.name || '').filter(Boolean);
+
+    if (tarifaIntermu && isIntermu) {
+      custoViagem = tarifaIntermu;
+    } else {
+      // Soma tarifas por tipo de modal (sem integração no RJ, com integração em SP/BH)
+      const temIntegracao = norm(state.origem.localidade).includes('sao paulo') ||
+                            norm(state.origem.localidade).includes('belo horizonte') ||
+                            norm(state.origem.localidade).includes('curitiba');
+      if (temIntegracao) {
+        custoViagem = tarifas.onibus; // 1 tarifa única por integração
+      } else {
+        tipos.forEach(t => {
+          if (t === 'metrô') custoViagem += tarifas.metro || tarifas.onibus;
+          else if (t === 'trem') custoViagem += tarifas.trem || tarifas.onibus;
+          else custoViagem += tarifas.onibus;
+        });
+        if (custoViagem === 0) custoViagem = tarifas.onibus;
+      }
+    }
+
+    const passViagem = tarifaIntermu && isIntermu ? 1 : Math.max(tipos.length, 1);
+
+    const detNomes = linhasNomes.length ? 'Linhas: ' + linhasNomes.slice(0, 3).join(', ') + '. ' : '';
+    const balText = steps.length > 1 ? steps.length + ' trecho(s). ' : 'Sem baldeação. ';
+
+    linhas.push({
+      tipo: tipoLabel,
+      nome: tiposUnicos.join(' + ') || 'Ônibus',
+      detalhes: detNomes + balText + '~' + durMin + 'min · ' + distKm + 'km',
+      passagens_por_viagem: passViagem,
+      custo_viagem: custoViagem,
+      durMin,
+    });
+
+    if (custoViagem < menorCustoViagem) {
+      menorCustoViagem = custoViagem;
+      melhorIdx = ri;
+    }
+  });
+
+  if (linhas.length === 0) throw new Error('Nenhuma rota de transporte público encontrada.');
+
+  const melhor = linhas[melhorIdx];
+  const custoDia = melhor.custo_viagem * 2;
+  const custoMensal = custoDia * dias;
+  const leg0 = routes[0].legs[0];
+
+  return {
+    fonte: 'google',
+    distancia_km: parseFloat((leg0.distance.value / 1000).toFixed(1)),
+    tempo_min: Math.round(leg0.duration.value / 60),
+    linhas,
+    melhor_opcao_index: melhorIdx,
+    custo_dia: custoDia,
+    custo_mensal: custoMensal,
+    custo_anual: custoMensal * 12,
+    passagens_por_dia: melhor.passagens_por_viagem * 2,
+    tarifa_base: melhor.custo_viagem,
+    obs: 'Rotas via Google Maps. Valores calculados com tarifas públicas vigentes (2025). Confirme no site da operadora.',
+  };
+}
+
+// ── CÁLCULO LOCAL (fallback sem API) ─────────────────────────────────────────
+var TARIFAS = {
+  'rio de janeiro': { onibus: 4.05, brt: 4.05, metro: 6.00, trem: 2.20, integra: false },
+  'niteroi':        { onibus: 4.05, brt: 4.05, metro: null, trem: null, integra: false },
+  'marica':         { onibus: 0.00, brt: 0.00, metro: null, trem: null, integra: false, gratuito: true },
+  'nova iguacu':    { onibus: 4.05, brt: null,  metro: null, trem: 2.20, integra: false },
+  'duque de caxias':{ onibus: 4.05, brt: null,  metro: null, trem: 2.20, integra: false },
+  'sao goncalo':    { onibus: 4.05, brt: null,  metro: null, trem: 2.20, integra: false },
+  'sao paulo':      { onibus: 4.40, brt: 4.40,  metro: 5.00, trem: 5.00, integra: true, tarifaUnica: 4.40 },
+  'guarulhos':      { onibus: 4.40, brt: null,  metro: null, trem: null, integra: false },
+  'campinas':       { onibus: 4.55, brt: null,  metro: null, trem: null, integra: false },
+  'belo horizonte': { onibus: 4.50, brt: 4.50,  metro: 4.50, trem: null, integra: true },
+  'salvador':       { onibus: 4.50, brt: 4.50,  metro: 4.50, trem: null, integra: false },
+  'curitiba':       { onibus: 5.50, brt: 5.50,  metro: null, trem: null, integra: true },
+  'recife':         { onibus: 4.00, brt: null,   metro: 4.00, trem: null, integra: false },
+  'fortaleza':      { onibus: 3.90, brt: 3.90,  metro: 3.90, trem: null, integra: false },
+  'porto alegre':   { onibus: 4.80, brt: 4.80,  metro: 4.80, trem: null, integra: false },
+  'brasilia':       { onibus: 5.50, brt: 5.50,  metro: 5.50, trem: null, integra: true },
+  'manaus':         { onibus: 4.50, brt: null,   metro: null, trem: null, integra: false },
+  'goiania':        { onibus: 4.30, brt: 4.30,  metro: null, trem: null, integra: false },
+  '_default':       { onibus: 4.50, brt: null,   metro: null, trem: null, integra: false },
+};
+var INTERMU_TARIFAS = {
+  'marica_rio de janeiro': 42.00,
+  'marica_niteroi': 18.00,
+};
+
+function getTarifa(cidade) {
+  const c = norm(cidade);
+  for (const key of Object.keys(TARIFAS)) {
+    if (c.includes(norm(key)) || norm(key).includes(c)) return { ...TARIFAS[key] };
+  }
+  return { ...TARIFAS['_default'] };
+}
+
+function estimarDist(cepO, cepD) {
+  const a = parseInt(cepO.replace(/\D/g,'').slice(0,5));
+  const b = parseInt(cepD.replace(/\D/g,'').slice(0,5));
+  const diff = Math.abs(a - b);
+  if (diff < 100)  return { km: 5,  min: 25 };
+  if (diff < 500)  return { km: 12, min: 40 };
+  if (diff < 2000) return { km: 25, min: 60 };
+  if (diff < 5000) return { km: 45, min: 90 };
+  return { km: 80, min: 150 };
+}
+
+function calcularLocal() {
+  const o = state.origem, d = state.destino, dias = state.dias;
+  const cidO = o.localidade, cidD = d.localidade;
+  const mesma = norm(cidO) === norm(cidD);
+  const inter = !mesma;
+  const tO = getTarifa(cidO), tD = getTarifa(cidD);
+  const est = estimarDist(o.cep, d.cep);
+  let linhas = [], melhorIdx = 0, custoDia = 0, passagensDia = 2;
+
+  if (tO.gratuito && !inter) {
+    custoDia = 0; passagensDia = 0;
+    linhas = [{ tipo:'ônibus', nome:'Ônibus Municipal Gratuito (Mobi+)',
+      detalhes:'Transporte gratuito em ' + cidO + '.', passagens_por_viagem:0, custo_viagem:0 }];
+
+  } else if (tO.gratuito && inter) {
+    const chave = norm(cidO)+'_'+norm(cidD);
+    const chaveInv = norm(cidD)+'_'+norm(cidO);
+    const ti = INTERMU_TARIFAS[chave] || INTERMU_TARIFAS[chaveInv] || 30.00;
+    custoDia = ti * 2; passagensDia = 2;
+    linhas = [{ tipo:'expresso', nome:'Intermunicipal ' + cidO + ' → ' + cidD,
+      detalhes:'Ônibus direto. Municipal em ' + cidO + ' gratuito (Mobi+). ~' + est.min + 'min.',
+      passagens_por_viagem:1, custo_viagem:ti }];
+
+  } else if (mesma && tO.integra) {
+    const tarifa = tO.tarifaUnica || tO.onibus;
+    custoDia = tarifa * 2; passagensDia = 2;
+    linhas = [{ tipo:'ônibus', nome: est.km > 15 ? 'Ônibus com integração' : 'Ônibus direto',
+      detalhes: 'Integração tarifária. ~' + est.min + 'min.',
+      passagens_por_viagem:1, custo_viagem:tarifa }];
+    if (tO.metro) linhas.push({ tipo:'metrô', nome:'Metrô (integrado)',
+      detalhes:'Mais rápido, mesma tarifa por integração.', passagens_por_viagem:1, custo_viagem:tO.metro });
+    if (tO.brt) linhas.push({ tipo:'BRT', nome:'BRT (integrado)',
+      detalhes:'Corredor expresso, tarifa única.', passagens_por_viagem:1, custo_viagem:tO.brt });
+
+  } else if (mesma && !tO.integra) {
+    const baldeacao = est.km > 18;
+    const passV = baldeacao ? 2 : 1;
+    const custoOni = tO.onibus * passV;
+    custoDia = custoOni * 2; passagensDia = passV * 2;
+    linhas = [{ tipo:'ônibus', nome: baldeacao ? 'Ônibus c/ baldeação' : 'Ônibus direto',
+      detalhes: baldeacao ? '1 baldeação. 2 passagens por sentido. ~' + est.min + 'min.'
+        : 'Linha direta. ~' + est.min + 'min.',
+      passagens_por_viagem:passV, custo_viagem:custoOni }];
+    if (tO.metro) linhas.push({ tipo:'metrô', nome:'Metrô',
+      detalhes:'Sem integração. Mais rápido. ~' + Math.round(est.min * 0.7) + 'min.',
+      passagens_por_viagem:1, custo_viagem:tO.metro });
+    if (tO.trem) linhas.push({ tipo:'trem', nome:'Trem (SuperVia)',
+      detalhes:'Mais barato. Verificar linha disponível para o trecho.',
+      passagens_por_viagem:1, custo_viagem:tO.trem });
+    if (tO.brt) linhas.push({ tipo:'BRT', nome:'BRT',
+      detalhes:'Corredor expresso. Mais rápido que ônibus convencional.',
+      passagens_por_viagem:1, custo_viagem:tO.brt });
+    // Seleciona menor custo
+    let min = Infinity;
+    linhas.forEach((l, i) => { if (l.custo_viagem < min) { min = l.custo_viagem; melhorIdx = i; } });
+    custoDia = linhas[melhorIdx].custo_viagem * 2;
+    passagensDia = linhas[melhorIdx].passagens_por_viagem * 2;
+
+  } else {
+    const chave = norm(cidO)+'_'+norm(cidD);
+    const chaveInv = norm(cidD)+'_'+norm(cidO);
+    const ti = INTERMU_TARIFAS[chave] || INTERMU_TARIFAS[chaveInv] || Math.max(tO.onibus * 2.5, 15);
+    custoDia = ti * 2; passagensDia = 2;
+    linhas = [{ tipo:'expresso', nome:'Intermunicipal ' + cidO + ' → ' + cidD,
+      detalhes:'Linha direta entre municípios. ~' + est.min + 'min.',
+      passagens_por_viagem:1, custo_viagem:ti }];
+  }
+
+  const custoMensal = custoDia * dias;
+  return {
+    fonte: 'local',
+    distancia_km: est.km, tempo_min: est.min,
+    linhas, melhor_opcao_index: melhorIdx,
+    custo_dia: custoDia, custo_mensal: custoMensal,
+    custo_anual: custoMensal * 12, passagens_por_dia: passagensDia,
+    tarifa_base: linhas[melhorIdx] ? linhas[melhorIdx].custo_viagem : 0,
+    obs: 'Estimativa por tarifas fixas (sem Google Maps). Para rotas reais, cadastre sua chave acima.',
+  };
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function fmt(v) { return 'R$' + v.toFixed(2).replace('.', ','); }
+
+function renderResultado(r) {
+  document.getElementById('res-mensal').textContent = fmt(r.custo_mensal);
+  document.getElementById('res-sub').textContent = 'ida + volta · ' + state.dias + ' dias presenciais';
+  document.getElementById('res-dia').textContent = fmt(r.custo_dia);
+  document.getElementById('res-pass').textContent = r.passagens_por_dia;
+  document.getElementById('res-anual').textContent = fmt(r.custo_anual);
+  document.getElementById('res-tarifa').textContent = fmt(r.tarifa_base);
+  document.getElementById('res-dist').textContent =
+    'Distância estimada: ' + r.distancia_km + ' km · Tempo: ~' + r.tempo_min + ' min';
+
+  const o = state.origem, d = state.destino;
+  document.getElementById('res-origem-tag').textContent = o.bairro + ' — ' + o.localidade;
+  document.getElementById('res-destino-tag').textContent = d.bairro + ' — ' + d.localidade;
+
+  const badge = document.getElementById('res-modo-badge');
+  if (r.fonte === 'google') {
+    badge.textContent = '✓ Rotas via Google Maps';
+    badge.className = 'modo-badge modo-gmaps';
+  } else {
+    badge.textContent = '⚠ Estimativa local (sem Google Maps)';
+    badge.className = 'modo-badge modo-local';
+  }
+
+  const badgeClass = { 'ônibus':'badge-onibus','metrô':'badge-metro','trem':'badge-trem',
+    'BRT':'badge-brt','expresso':'badge-express','VLT':'badge-metro','combinado':'badge-combinado' };
+
+  document.getElementById('lista-linhas').innerHTML = r.linhas.map((l, i) => {
+    const best = i === r.melhor_opcao_index;
+    const cls = badgeClass[l.tipo] || 'badge-onibus';
+    return '<div class="linha-item' + (best ? ' best' : '') + '">' +
+      '<span class="badge ' + cls + '">' + l.tipo + '</span>' +
+      '<div><div class="linha-nome">' + l.nome + (best ? ' ✓' : '') + '</div>' +
+      '<div class="linha-det">' + l.detalhes + '</div>' +
+      '<div class="linha-custo">' + fmt(l.custo_viagem) + ' por sentido · ' + l.passagens_por_viagem + ' passagem(ns)</div>' +
+      '</div></div>';
+  }).join('');
+
+  // Walk tip por CEP destino
+  const WALK = {
+    '20021': 'Menezes Cortes / Rodoviária Novo Rio — ~1 km a pé até o destino. Mais rápido que baldeação.',
+    '20040': 'Centro/Castelo — ~800m a pé.',
+    '20031': 'Santos Dumont — ~1 km a pé.',
+  };
+  const cepPfx = d.cep.replace(/\D/g,'').slice(0,5);
+  const walkBox = document.getElementById('tip-walk-box');
+  if (WALK[cepPfx]) {
+    document.getElementById('tip-walk-text').textContent = '🚶 ' + WALK[cepPfx];
+    walkBox.style.display = 'flex';
+  } else {
+    walkBox.style.display = 'none';
+  }
+
+  document.getElementById('aviso-texto').textContent = r.obs;
+  document.getElementById('form-section').style.display = 'none';
+  document.getElementById('resultado').classList.add('show');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function novoCalculo() {
+  document.getElementById('resultado').classList.remove('show');
+  document.getElementById('form-section').style.display = 'block';
+  ['cep-origem','cep-destino'].forEach(id => {
+    document.getElementById(id).value = '';
+    document.getElementById(id).className = 'inp';
+  });
+  ['hint-origem','hint-destino','addr-origem','addr-destino'].forEach(id =>
+    document.getElementById(id).innerHTML = '');
+  state.origem = null; state.destino = null;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+</body>
+</html>
